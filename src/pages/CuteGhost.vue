@@ -13,7 +13,7 @@
       @mousedown="startPetDrag"
       @mouseenter="handlePetEnter"
       @mouseleave="handlePetLeave"
-      @click="togglePetGameList"
+      @click="randomSpeak" <!-- 本体点击改为随机说话 -->
     >
       <!-- 幽灵主体（适配Steam暗黑风格） -->
       <div class="ghost">
@@ -38,6 +38,12 @@
         <div class="shadow"></div>
       </div>
 
+      <!-- 桌宠说话气泡 -->
+      <div class="pet-speak-bubble" v-if="showPetSpeak">
+        <div class="speak-content">{{ petSpeakContent }}</div>
+        <div class="speak-arrow"></div>
+      </div>
+
       <!-- 桌宠控制按钮（Steam风格） -->
       <div class="pet-controls" :class="{ 'controls-show': isPetHover }">
         <button class="control-btn" @click.stop="togglePetVisible">
@@ -45,14 +51,15 @@
             <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" fill="#66c0f4"/>
           </svg>
         </button>
-        <button class="control-btn" @click.stop="resetPetPosition">
+        <button class="control-btn" @click.stop="togglePetAutoMove">
           <svg viewBox="0 0 24 24" width="12" height="12">
             <path d="M12 5.99L19.53 19H4.47L12 5.99M12 2L1 21h22L12 2zm1 14h-2v2h2v-2zm0-6h-2v4h2v-4z" fill="#66c0f4"/>
           </svg>
         </button>
-        <button class="control-btn" @click.stop="togglePetAutoMove">
+        <!-- 最右侧按钮改为：打开快速启动游戏列表 -->
+        <button class="control-btn" @click.stop="togglePetGameList">
           <svg viewBox="0 0 24 24" width="12" height="12">
-            <path d="M8 5v14l11-7z" fill="#66c0f4"/>
+            <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.73 0-3.14.89-4 2.23V14c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-1.77c-.86-1.34-2.27-2.23-4-2.23zm0 10c-1.66 0-3-1.34-3-3 0-1.31 1.16-2.41 2.64-2.96.41-.18.66-.59.66-1.04 0-.65-.64-1.19-1.28-.94C9.82 12.93 9 14.05 9 15.3c0 2.76 2.24 5 5 5s5-2.24 5-5c0-1.25-.82-2.37-1.96-2.77-.64-.25-1.28.29-1.28.94 0 .45.25.86.66 1.04 1.48.55 2.64 1.65 2.64 2.96 0 1.66-1.34 3-3 3z" fill="#66c0f4"/>
           </svg>
         </button>
       </div>
@@ -60,7 +67,7 @@
       <!-- 桌宠游戏列表弹窗（显示已购游戏） -->
       <div class="pet-game-list" v-if="showPetGameList && ownedGames.length > 0">
         <div class="list-header">
-          <span>我的游戏</span>
+          <span>快速启动</span>
           <button class="close-list-btn" @click.stop="showPetGameList = false">×</button>
         </div>
         <ul class="game-items">
@@ -321,6 +328,22 @@ const petAutoMoveTimer = ref(null)    // 自动移动定时器
 const petMoveSpeed = 1500             // 移动过渡时间
 const petMinInterval = 2000           // 最小移动间隔
 const petMaxInterval = 5000           // 最大移动间隔
+// 桌宠说话相关
+const petSpeakList = ref([ // Steam风格随机话术
+  "今天玩什么游戏呀？😜",
+  "CS2启动！突突突～🔫",
+  "原神，启动！✨",
+  "要不要来局星露谷放松下？🌾",
+  "赛博朋克2077超酷的！😎",
+  "艾尔登法环好难啊😭",
+  "我的世界yyds！⛏️",
+  "巫师3的剧情太顶了！🔥",
+  "购物车又加新游戏了？🛒",
+  "记得按时退款哦～💰"
+])
+const petSpeakContent = ref('')       // 当前说话内容
+const showPetSpeak = ref(false)       // 是否显示说话气泡
+const petSpeakTimer = ref(null)       // 说话气泡定时器
 
 // 生成桌宠随机位置（适配80x100尺寸）
 const getPetRandomPos = () => {
@@ -343,6 +366,21 @@ const execPetAutoMove = () => {
     petPosition.value = getPetRandomPos()
     execPetAutoMove()
   }, randomInterval)
+}
+
+// 桌宠随机说话方法
+const randomSpeak = () => {
+  // 清除原有定时器
+  if (petSpeakTimer.value) clearTimeout(petSpeakTimer.value)
+  // 随机选一句话
+  const randomIndex = Math.floor(Math.random() * petSpeakList.value.length)
+  petSpeakContent.value = petSpeakList.value[randomIndex]
+  // 显示气泡
+  showPetSpeak.value = true
+  // 3秒后隐藏气泡
+  petSpeakTimer.value = setTimeout(() => {
+    showPetSpeak.value = false
+  }, 3000)
 }
 
 // 桌宠控制方法
@@ -369,6 +407,10 @@ const togglePetAutoMove = () => {
   }
 }
 const togglePetGameList = () => {
+  // 打开游戏列表时先隐藏说话气泡
+  if (petSpeakTimer.value) clearTimeout(petSpeakTimer.value)
+  showPetSpeak.value = false
+  // 切换游戏列表显示状态
   showPetGameList.value = !showPetGameList.value
 }
 
@@ -432,6 +474,7 @@ onUnmounted(() => {
   document.removeEventListener('mousemove', handlePetDrag)
   document.removeEventListener('mouseup', stopPetDrag)
   if (petAutoMoveTimer.value) clearTimeout(petAutoMoveTimer.value)
+  if (petSpeakTimer.value) clearTimeout(petSpeakTimer.value)
 })
 
 // 窗口大小调整
@@ -1077,7 +1120,7 @@ watch(isPetVisible, (newVal) => {
   position: fixed;
   z-index: 999;
   transition: left 1.5s ease, top 1.5s ease, opacity 0.3s ease;
-  cursor: move;
+  cursor: pointer; /* 本体改为点击指针 */
   user-select: none;
   /* 适配Steam暗黑背景 */
   filter: drop-shadow(0 0 5px rgba(102, 192, 244, 0.3));
@@ -1282,6 +1325,47 @@ watch(isPetVisible, (newVal) => {
   40% {
     transform: translateX(-50%) scale(0.5);
   }
+}
+
+/* 桌宠说话气泡样式 */
+.steam-ghost-pet .pet-speak-bubble {
+  position: absolute;
+  top: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 180px;
+  background-color: #171a21;
+  border: 1px solid #66c0f4;
+  border-radius: 12px;
+  padding: 8px 12px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  z-index: 1001;
+  animation: speak-fade 0.3s ease forwards;
+}
+
+.steam-ghost-pet .speak-content {
+  color: #c7d5e0;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.steam-ghost-pet .speak-arrow {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid #66c0f4;
+}
+
+@keyframes speak-fade {
+  from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 /* 桌宠控制按钮（Steam风格） */

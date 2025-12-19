@@ -75,6 +75,10 @@
               <button class="add-to-cart-btn" @click="game.id && addToCart(game)" :disabled="!game.id">
                 添加至购物车
               </button>
+              <!-- 新增：立即购买按钮 -->
+              <button class="buy-now-btn" @click="game.id && buyNow(game)" :disabled="!game.id">
+                立即购买
+              </button>
               <button class="remove-btn" @click="removeFromWishlist(idx)" :disabled="!game.id">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="#fff">
                   <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
@@ -355,10 +359,12 @@ const removeWishlistItemById = (gameId) => {
   if (index > -1) {
     const removedGame = wishlist.value.splice(index, 1)[0]
     localStorage.setItem('wishlist', JSON.stringify(wishlist.value))
+    // 提示用户游戏已从愿望单移除
+    alert(`${removedGame.name} 已购买，自动从愿望单移除`)
   }
 }
 
-// 立即购买（修改后）
+// 立即购买（修改后：购买后自动移除愿望单）
 const buyNow = (game) => {
   const gameId = game.id
   const currentPrice = getGamePrice(game)
@@ -370,7 +376,7 @@ const buyNow = (game) => {
   const newOwned = [...new Set([...oldOwned, gameId])]
   localStorage.setItem('ownedGames', JSON.stringify(newOwned))
   
-  // 新增：购买后自动从愿望单移除
+  // 核心修改：购买后自动从愿望单移除该游戏
   removeWishlistItemById(gameId)
   
   // 跳转到游戏库
@@ -718,6 +724,24 @@ const showNotDeveloped = () => {
 
 .add-to-cart-btn:hover {
   background-color: #5b7b2f;
+}
+
+/* 新增：立即购买按钮样式 */
+.buy-now-btn {
+  flex: 1;
+  padding: 8px 0;
+  background-color: #66c0f4;
+  color: #171a21;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.buy-now-btn:hover {
+  background-color: #84c8f5;
 }
 
 .remove-btn {
